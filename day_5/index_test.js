@@ -4,24 +4,33 @@ const input = fs.readFileSync('./data.txt', 'utf8');
 
 const inputArray = input.split('\n');
 
-const INITIAL_SEEDS = "seeds: ";
-
-const mapHeaders = [
-	"seed-to-soil map:",
-	"soil-to-fertilizer map:",
-	"fertilizer-to-water map:",
-	"water-to-light map:",
-	"light-to-temperature map:",
-	"temperature-to-humidity map:",
-	"humidity-to-location map:"
-]
+// What is the lowest location number that corresponds to
+// any of the initial seed numbers?
+const labelMap = {
+	initialSeeds: "seeds: ",
+	// seed-to-soil map: describes how to convert a seed number (the source) to a
+	// soil number (the destination). This lets the gardener and his
+	// team know which soil to use with which seeds, which water to use with
+	//  which fertilizer, and so on.
+	// [dest]    [source]   [range]
+	// 912405184 1056091028 152837752
+	seedToSoilMap: "seed-to-soil map:",
+	soilToFertMap: "soil-to-fertilizer map:",
+	fertToWaterMap: "fertilizer-to-water map:",
+	waterToLightMap: "water-to-light map:",
+	lightToTempMap: "light-to-temperature map:",
+	tempToHumidityMap: "temperature-to-humidity map:",
+	humToLocationMap: "humidity-to-location map:"
+}
 
 const isDataLine = line => line && line.split(' ').length === 3;
 const getDataLineParts = line => line.split(' ')
+
 const parseMapFromTo = (name) => {
 	const [from, _, to] = name.split(' map:')[0].split('-');
 	return {from, to}
 }
+
 const buildMapItem = (overrides = {}) => ({
 	name: "",
 	from: "",
@@ -30,8 +39,9 @@ const buildMapItem = (overrides = {}) => ({
 	...overrides
 });
 
-let initialSeeds = inputArray[0].replace(INITIAL_SEEDS, '').split(' ').map(Number)
+let initialSeeds = inputArray[0].replace(labelMap.initialSeeds, '').split(' ').map(Number)
 let currentMapping = buildMapItem();
+const mapHeaders = Object.values(labelMap);
 const mappings = {};
 
 for (let i=1; i<inputArray.length; i++) {
@@ -91,7 +101,7 @@ const mapAToB = (a, mapping) => {
 }
 
 const findLowestLocationNumber = (seeds, mappings) => {
-	console.log(">>>finding lowest location number for", seeds, mappings);
+	// console.log(">>>finding lowest location number for", seeds, mappings);
 
 	let lowestLocationNumber = Number.MAX_SAFE_INTEGER;
 	console.time("findLowestLocationNumber")
@@ -135,4 +145,4 @@ const findLowestLocationNumber = (seeds, mappings) => {
 	return lowestLocationNumber;
 }
 
-console.log("Lowest Location is ", findLowestLocationNumber(initialSeeds, mappings))
+console.log(">>>", findLowestLocationNumber(initialSeeds, mappings))

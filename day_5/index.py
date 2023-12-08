@@ -1,4 +1,10 @@
-seeds: 5844012 110899473 1132285750 58870036 986162929 109080640 3089574276 100113624 2693179996 275745330 2090752257 201704169 502075018 396653347 1540050181 277513792 1921754120 26668991 3836386950 66795009
+import os
+import sys
+
+# Read the data from the file
+# with open('./data.txt', 'r') as file:
+#     input_data = file.read()
+input_data = """seeds: 5844012 110899473 1132285750 58870036 986162929 109080640 3089574276 100113624 2693179996 275745330 2090752257 201704169 502075018 396653347 1540050181 277513792 1921754120 26668991 3836386950 66795009
 
 seed-to-soil map:
 3547471595 1239929038 174680800
@@ -170,3 +176,92 @@ humidity-to-location map:
 1109156887 4210612885 84354411
 4273894768 1155656956 21072528
 1232230400 1330301508 356414156
+"""
+
+input_array = input_data.split('\n')
+
+INITIAL_SEEDS = "seeds: "
+
+map_headers = [
+    "seed-to-soil map:",
+    "soil-to-fertilizer map:",
+    "fertilizer-to-water map:",
+    "water-to-light map:",
+    "light-to-temperature map:",
+    "temperature-to-humidity map:",
+    "humidity-to-location map:"
+]
+
+def is_data_line(line):
+    return line and len(line.split(' ')) == 3
+
+def get_data_line_parts(line):
+    return line.split(' ')
+
+def parse_map_from_to(name):
+    parts = name.split(' map:')[0].split('-')
+    return {'from': parts[0], 'to': parts[2]}
+
+def build_map_item(overrides=None):
+    if overrides is None:
+        overrides = {}
+    return {"name": "", "from": "", "to": "", "items": [], **overrides}
+
+initial_seeds = list(map(int, input_array[0].replace(INITIAL_SEEDS, '').split(' ')))
+current_mapping = build_map_item()
+mappings = {}
+
+for line in input_array[1:]:
+    if line.endswith('map:'):
+        from_to = parse_map_from_to(line)
+        current_mapping = build_map_item({
+            "name": f"{from_to['from']}-to-{from_to['to']}",
+            "from": from_to['from'],
+            "to": from_to['to'],
+            "items": []
+        })
+        mappings[current_mapping["name"]] = current_mapping
+    elif is_data_line(line):
+        current_mapping["items"].append(get_data_line_parts(line))
+
+if current_mapping["items"]:
+    mappings[current_mapping["name"]] = current_mapping
+
+def map_a_to_b(a, mapping):
+    match = None
+    for item in mapping["items"]:
+        item_to, item_from, range_length = map(int, item)
+        for counter in range(range_length):
+            current_from = item_from + counter
+            current_to = item_to + counter
+            if current_from == a:
+                match = current_to
+                break
+        if match is not None:
+            break
+    return match if match is not None else a
+
+def find_lowest_location_number(seeds, mappings):
+    lowest_location_number = sys.maxsize * 2 + 1
+    for seed in seeds:
+        print(">>> seed", seed)
+        soil = map_a_to_b(seed, mappings["seed-to-soil"])
+        print(">>> soil", soil)
+        fert = map_a_to_b(soil, mappings["soil-to-fertilizer"])
+        print(">>> fert", fert)
+        water = map_a_to_b(fert, mappings["fertilizer-to-water"])
+        print(">>> water", water)
+        light = map_a_to_b(water, mappings["water-to-light"])
+        print(">>> light", light)
+        temp = map_a_to_b(light, mappings["light-to-temperature"])
+        print(">>> temp", temp)
+        humidity = map_a_to_b(temp, mappings["temperature-to-humidity"])
+        print(">>> humidity", humidity)
+        loc = map_a_to_b(humidity, mappings["humidity-to-location"])
+        print(">>> loc", loc)
+        if loc < lowest_location_number:
+            lowest_location_number = loc
+    return lowest_location_number
+
+# Print the lowest location number
+print("Lowest Location is", find_lowest_location_number(initial_seeds, mappings))
